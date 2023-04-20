@@ -10,8 +10,8 @@ namespace Op3nPinball.DopeSheet
     {       
         Dictionary<string, JSONLightShowMode> JSONLightShows;
         List<string> ActiveModes;
-        const string EvtStartLightMode = "Op3n_StartLightMode";
-        const string EvtStopLightMode = "Op3n_StopLightMode";
+        public const string EvtStartLightMode = "Op3n_StartLightMode";
+        public const string EvtStopLightMode = "Op3n_StopLightMode";
         
         public JSONLightShowModeManager (P3Controller controller, int priority)
             : base(controller, priority)
