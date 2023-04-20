@@ -11,48 +11,53 @@ namespace Op3nPinball.DopeSheet
     {
         public readonly string LightshowPath = Path.Combine(Path.Combine("Assets", "StreamingAssets"), "LightShowConfigs");
         
-        Dictionary<string, Dictionary<string, SortedDictionary<double, LightData>>> lightShows;
+        private Dictionary<string, Dictionary<string, SortedDictionary<int, LightData>>> _lightShows;
+        private Dictionary<string, float> _frameRates;
 
         public void BuildLightshows()
         {
-            lightShows = new Dictionary<string, Dictionary<string, SortedDictionary<double, LightData>>>();
+            _lightShows = new Dictionary<string, Dictionary<string, SortedDictionary<int, LightData>>>();
+            _frameRates = new Dictionary<string, float>();
             AnimationClip[] clips = AnimationUtility.GetAnimationClips(gameObject);
 
             foreach(AnimationClip clip in clips)
             {
                 EditorCurveBinding[] curveBindings = AnimationUtility.GetCurveBindings(clip);
-                var lightKeys = new  Dictionary<string, SortedDictionary<double, LightData>>();
-                lightShows[clip.name] = lightKeys;
+                var lightKeys = new  Dictionary<string, SortedDictionary<int, LightData>>();
+                _lightShows[clip.name] = lightKeys;
+                _frameRates[clip.name] = clip.frameRate;
                 foreach (EditorCurveBinding cBinding in curveBindings)
                 {
 
                     AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, cBinding);
                     if (!lightKeys.ContainsKey(cBinding.path))
                     {
-                        lightKeys[cBinding.path] = new SortedDictionary<double, LightData>();
+                        lightKeys[cBinding.path] = new SortedDictionary<int, LightData>();
                     }
-                    SortedDictionary<double, LightData> timeDict = lightKeys[cBinding.path];
+                    SortedDictionary<int, LightData> timeDict = lightKeys[cBinding.path];
 
                     for (int k = 0; k < curve.keys.Length; ++k)
                     {
-                        double t = curve.keys[k].time;
-                        if (!timeDict.ContainsKey(t))
+                        int frameNum = Mathf.RoundToInt((curve.keys[k].time)*((float)clip.frameRate));
+                        if (!timeDict.ContainsKey(frameNum))
                         {
-                            timeDict[t] = new LightData();
+                            timeDict[frameNum] = new LightData();
                         }
-                        timeDict[t].SetColor(cBinding.propertyName, curve.keys[k].value);
+                        timeDict[frameNum].SetColor(cBinding.propertyName, curve.keys[k].value);
                     }
                 }
             }
 
-            foreach (string clip in lightShows.Keys)
+            foreach (string clip in _lightShows.Keys)
             {
                 LightshowClip newClip = new LightshowClip();
                 newClip.Name = clip;
+                newClip.FrameRate = _frameRates[clip];
                 newClip.LEDCurves = new List<LightshowLEDCurve>();
 
-                foreach (string ledname in lightShows[clip].Keys)
+                foreach (string ledname in _lightShows[clip].Keys)
                 {
+                    int offset = 0;
                     string name = ledname;
                     Match m = Regex.Match(ledname, "^\\w+/(\\w+)$");
                     if (m.Success)
@@ -62,24 +67,24 @@ namespace Op3nPinball.DopeSheet
                     LightshowLEDCurve curve = new LightshowLEDCurve();
                     curve.Name = name;
                     curve.Keyframes = new List<LightshowKeyframe>();
-                    double prevTime = 0;
+                    int prevTime = 0;
                     Color prevCol = new Color(0,0,0,0);
- 
-                    double fade = 0;
-                    double duration = 0;
-                    LightshowKeyframe keyframe = new LightshowKeyframe();
-                    ushort[] p3Color;
 
-                    var kfEnumerator = lightShows[clip][ledname].GetEnumerator();
+                    var kfEnumerator = _lightShows[clip][ledname].GetEnumerator();
                     kfEnumerator.MoveNext();
                     // The first frame defines the script start and the value is ignored
-                    curve.delay = kfEnumerator.Current.Key;
-                    prevTime = kfEnumerator.Current.Key;
+                    int fade = 0;
+                    int duration = 0;
+                    LightshowKeyframe keyframe = new LightshowKeyframe(_frameRates[clip]);
+                    ushort[] p3Color;
+                    offset = 1;
+                    curve.delay = (double)kfEnumerator.Current.Key / (double)_frameRates[clip];
+                    prevTime = kfEnumerator.Current.Key + offset;
 
                     kfEnumerator.MoveNext();
-                    fade = kfEnumerator.Current.Key - prevTime;
-                    keyframe = new LightshowKeyframe();
-                    keyframe.Time = prevTime;
+                    fade = (kfEnumerator.Current.Key - prevTime);
+                    keyframe = new LightshowKeyframe(_frameRates[clip]);
+                    keyframe.SetTime(prevTime - offset);
                     duration = fade;
                     prevCol = kfEnumerator.Current.Value.color;
                     prevTime = kfEnumerator.Current.Key;
@@ -102,13 +107,13 @@ namespace Op3nPinball.DopeSheet
                                     (ushort)(255*prevCol.a)
                             };
                             keyframe.LightColor = p3Color;
-                            keyframe.duration = duration;
-                            keyframe.fadeTime = fade;
+                            keyframe.SetDuration(duration);
+                            keyframe.SetFadeTime(fade);
                             curve.Keyframes.Add(keyframe);
 
                             // Start next frame
-                            keyframe = new LightshowKeyframe();
-                            keyframe.Time = prevTime;
+                            keyframe = new LightshowKeyframe(_frameRates[clip]);
+                            keyframe.SetTime(prevTime - offset);
                             fade = kfEnumerator.Current.Key - prevTime;
                             duration = fade;
                             prevCol = kfEnumerator.Current.Value.color;
@@ -123,8 +128,8 @@ namespace Op3nPinball.DopeSheet
                             (ushort)(255*prevCol.a)
                     };
                     keyframe.LightColor = p3Color;
-                    keyframe.duration = duration;
-                    keyframe.fadeTime = fade;
+                    keyframe.SetDuration(duration);
+                    keyframe.SetFadeTime(fade);
                     curve.Keyframes.Add(keyframe);
 
                     // Add the curve to the clip.
@@ -150,6 +155,7 @@ namespace Op3nPinball.DopeSheet
     [System.Serializable]
     public class LightshowClip {
         public string Name;
+        public float FrameRate;
         [SerializeField]
         public List<LightshowLEDCurve> LEDCurves;
     }
@@ -165,9 +171,34 @@ namespace Op3nPinball.DopeSheet
     [System.Serializable]
     public class LightshowKeyframe {
         public double Time;
-        public double fadeTime;
-        public double duration;
+        public double FadeTime;
+        public double Duration;
+        private float FrameRate;
         public ushort[] LightColor;
+        public LightshowKeyframe() {}
+        public LightshowKeyframe(float frameRate)
+        {
+            FrameRate = frameRate;
+        }
+
+        public void SetTime(int frameNum) {
+            if (FrameRate == 0) {
+                return;
+            }
+            Time = frameNum / (double) FrameRate;
+        }
+        public void SetFadeTime(int frameNum) {
+            if (FrameRate == 0) {
+                return;
+            }
+            FadeTime = frameNum / (double) FrameRate;
+        }
+        public void SetDuration(int frameNum) {
+            if (FrameRate == 0) {
+                return;
+            }
+            Duration = frameNum / (double) FrameRate;
+        }
     }
 
     public class LightData

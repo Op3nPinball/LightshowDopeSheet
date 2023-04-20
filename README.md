@@ -27,7 +27,7 @@ Under the Op3nPinball dropdown menu, there is an ``LED Definition Import`` item 
 
 ## Important Notes
 
- * **The first keyframe indicates the start of the script and is otherwise ignored in the generated lightshow.** (Note this should be the frame after the keyframe, I need to change that). This will however impact the visualization. By convention we either set this first frame to black, or our expected last color (aka, our default for the light in our scene).
+ * **The first keyframe indicates that the script starts on the next frame and is otherwise ignored in the generated lightshow.** This will however impact the visualization. By convention we either set this first frame to black, or our expected last color (aka, our default for the light in our scene).
  * **The final keyframe defines the end of the script** this is less unusual and is probably what you would expect.
  * **Curves are completely ignored.** We use the default fade functionality of the LEDScript for the blends.
  * **Looping does not match between animation and the lightshow.** Unity will loop the animation as a whole, where as we can define our LEDScripts to start and stop at different times using the first 2 conventions. It is generally recommended that you have a keyframe for every LED being changed at the first and last frame of the animation. In this way Unity and the P3 lightshow will match very closely.

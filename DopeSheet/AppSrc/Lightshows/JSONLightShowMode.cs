@@ -24,7 +24,7 @@ namespace Op3nPinball.DopeSheet
                 LEDScript script = new LEDScript(p3.LEDs[curve.Name], priority);
                 foreach (var keyframe in curve.Keyframes) 
                 {
-                    script.AddCommand(keyframe.LightColor, keyframe.fadeTime, keyframe.duration);
+                    script.AddCommand(keyframe.LightColor, keyframe.FadeTime, keyframe.Duration);
                 }
                 LEDScriptInfo info = new LEDScriptInfo();
                 info.Name = curve.Name;
