@@ -11,7 +11,7 @@ Join the conversation at the [P3 Owners & Fans Discord](https://discord.gg/GuKGc
 
 The utility requires the LED configurations from the P3 modules with the names and locations of the LEDs to work. This information is available at runtime from the module driver.
 
-There is a code snippet in ``DopeSheet/AppSrc/AttractExample.cs`` that can be added to the P3SAAtractMode and then pressing 'L' in attract mode with save a json file with the module config. These written to ``LEDConfigs``. By rerunning with each of the modules, you can generate all the configs.
+There is a code snippet in ``DopeSheet/AppSrc/AttractExample.cs`` that can be added to the P3SAAttractMode and then pressing 'L' in attract mode with save a json file with the module config. These written to ``LEDConfigs``. By rerunning with each of the modules, you can generate all the configs.
 
 > Note: As of 2023/04/20, LL-EE does not has LED positions. You will still be able to generate lightshows with this utility, but the previews will not work.
 
