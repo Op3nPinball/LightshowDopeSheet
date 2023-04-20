@@ -76,9 +76,5 @@ crashlytics-build.properties
 
 RecentCertificateData.json
 *.cert
+/.vscode/
 
-# Ignore a all the generated files for the dopesheet.
-/DopeSheet/[Aa]ssets/[Aa]nimations/
-/DopeSheet/[Aa]ssets/[Aa]nimations.meta
-/DopeSheet/[Aa]ssets/StreamingAssets/
-/DopeSheet/[Aa]ssets/StreamingAssets.meta
